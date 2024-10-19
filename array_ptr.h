@@ -1,34 +1,36 @@
 #include <cassert>
 #include <cstdlib>
 #include <algorithm>
+#include <utility>
 template <typename Type>
 class ArrayPtr {
-public:
+public: // Constructors & assigment operatos
     // Инициализирует ArrayPtr нулевым указателем
     ArrayPtr() = default;
 
-    // Создаёт в куче массив из size элементов типа Type.
-    // Если size == 0, поле raw_ptr_ должно быть равно nullptr
-    explicit ArrayPtr(size_t size) : raw_ptr_(size > 0? new Type[size] : nullptr) {
-            }
-
+    explicit ArrayPtr(size_t size) : raw_ptr_(size > 0? new Type[size] : nullptr) {}
     // Конструктор из сырого указателя, хранящего адрес массива в куче либо nullptr
-    explicit ArrayPtr(Type* raw_ptr) noexcept : raw_ptr_(raw_ptr) {
-        
-    }
+    explicit ArrayPtr(Type* raw_ptr) noexcept : raw_ptr_(raw_ptr) {}
 
-    // Запрещаем копирование
     ArrayPtr(const ArrayPtr&) = delete;
+    ArrayPtr& operator=(const ArrayPtr&) = delete;
+
+
+    explicit ArrayPtr(ArrayPtr&& other) noexcept : 
+    raw_ptr_(std::exchange(other.raw_ptr_, nullptr)) {}
+
+    ArrayPtr& operator=(ArrayPtr&& other) noexcept {
+        if (this != &other) {
+            delete[] raw_ptr_;
+            raw_ptr_ = std::exchange(other.raw_ptr_, nullptr);
+        }
+        return *this;
+    }
 
     ~ArrayPtr() {
         delete[] raw_ptr_;
-        }
-
-    // Запрещаем присваивание
-    ArrayPtr& operator=(const ArrayPtr&) = delete;
-
-    // Прекращает владением массивом в памяти, возвращает значение адреса массива
-    // После вызова метода указатель на массив должен обнулиться
+    }
+public: // Methods
     [[nodiscard]] Type* Release() noexcept {
         Type* old_raw = raw_ptr_;
         raw_ptr_ = nullptr;
