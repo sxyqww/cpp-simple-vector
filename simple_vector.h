@@ -53,17 +53,14 @@ public: // Constructor & assigment operator
         return *this;
     }
     
-    SimpleVector(SimpleVector&& other) noexcept :
-    items_(std::move(other.items_)),
-    size_(std::exchange(other.size_, 0)),
-    capacity_(std::exchange(other.capacity_, 0))
-    {}
+    SimpleVector(SimpleVector&& other) noexcept
+    {
+        MoveFrom(std::move(other));
+    }
 
     SimpleVector& operator=(SimpleVector&& other) noexcept {
         if (this != &other) {
-            size_ = std::exchange(other.size_, 0);
-            capacity_ = std::exchange(other.capacity_, 0);
-            items_ = std::move(other.items_);
+            MoveFrom(std::move(other));
         }
         return *this;
     }
@@ -264,6 +261,13 @@ private:
 
         capacity_ = new_capacity;
         
+    }
+
+    void MoveFrom(SimpleVector&& other) noexcept {
+        size_ = std::exchange(other.size_, 0);
+        capacity_ = std::exchange(other.capacity_, 0);
+        items_ = std::move(other.items_);
+
     }
     ArrayPtr<Type> items_;
     size_t size_ = 0;
